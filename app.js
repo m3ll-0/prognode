@@ -1,6 +1,7 @@
 const express = require('express');
 
 // Import routes
+const authRoutes = require('./src/routes/auth.routes')
 const appartmentRoutes = require('./src/routes/appartments.routes');
 
 const app = express();
@@ -15,6 +16,7 @@ app.all('*', (req, res, next) => {
 })
 
 // Using routes
+app.use('/api/', authRoutes);
 app.use('/api/appartments', appartmentRoutes);
 
 // Handle all other (not found) endpoints.
@@ -32,7 +34,7 @@ app.all('*', (req, res, next) => {
 // Error handler
 app.use((error, req, res, next) => {
     console.log(error.message.toString());
-    // logger.error('Error handler: ', error.message.toString())
+    
     res.status(error.code).json(error)
   })
 
