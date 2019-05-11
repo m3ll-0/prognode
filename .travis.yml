@@ -4,6 +4,9 @@ node_js:
 cache:
   directories:
     - "node_modules"
+before_script:
+  - nmp install mocha mssql express
+  - nmp install
 script:
   - npm test
 deploy:
