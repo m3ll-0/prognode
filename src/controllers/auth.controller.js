@@ -1,30 +1,66 @@
+// imports
 const jwt = require('jsonwebtoken');
 const database = require('../datalayer/mssql.dao');
 const assert = require('assert');
-
-const phoneValidator = new RegExp('^06(| |-)[0-9]{8}$');
-
+const validatePhoneNumber = require('validate-phone-number-node-js');
+var postcode = require('postcode-validator');
+var validator = require("email-validator");
 
 module.exports = {
 
     registerUser: (req, res, next) => {
+
         console.log("registerUser");
 
         const user = req.body;
     
         // Verify correct fields
         try {
+            // Check if email is correct
+            if(!validator.validate(user.EmailAddress))
+            {
+              errorObject = {
+                message : 'Email is not valid!',
+                code : 500
+              } 
+
+              next(errorObject);
+              return;
+            }
+
+            // Check if phone number is correct
+            if(!validatePhoneNumber.validate(user.PhoneNumber))
+            {
+              errorObject = {
+                message : 'Phone number is not valid!',
+                code : 500
+              } 
+
+              next(errorObject);
+              return;
+            }
+            // Check if postalcode is valid
+            if(!postcode.validate(user.PostalCode, 'NL')) // returns true
+            {
+                errorObject = {
+                    message : 'Postal code is not valid!',
+                    code : 500
+                }
+
+                next(errorObject);
+                return;
+            }
+
+            // Assert to test data types
             assert.equal(typeof user.FirstName, 'string', 'FirstName is required.');
             assert.equal(typeof user.LastName, 'string', 'LastName is required.');
             assert.equal(typeof user.StreetAddress, 'string', 'StreetAddress is required.');
-            assert.equal(typeof user.FirstName, 'string', 'PostalCode is required.');
+            assert.equal(typeof user.PostalCode, 'string', 'PostalCode is required.');
             assert.equal(typeof user.City, 'string', 'City is required.');
             assert.equal(typeof user.DateOfBirth, 'string', 'DateOfBirth is required.');
             assert.equal(typeof user.PhoneNumber, 'string', 'PhoneNumber is required.');
             assert.equal(typeof user.EmailAddress, 'string', 'EmailAddress is required.');
             assert.equal(typeof user.Password, 'string', 'Password is required.');
-
-            assert(phoneValidator.test(user.PhoneNumber), 'A valid phoneNumber is required.')
           } catch (ex) {
             const errorObject = {
               message: 'Validation fails: ' + ex.toString(),
@@ -44,8 +80,8 @@ module.exports = {
               }
               next(errorObject)
             }
-            if (rows) {
-              res.status(200).json({ result: rows.recordset })
+            else {
+              res.status(200).json({})
             }
           })
     },
@@ -60,24 +96,20 @@ module.exports = {
     
         const query = `SELECT Password, UserId FROM [DBUser] WHERE EmailAddress='${user.EmailAddress}'`
 
-        // console.log(query);
-
         database.executeQuery(query, (err, rows) => {
           // verwerk error of result
           if (err) {
             const errorObject = {
-              message: 'Er ging iets mis in de database.',
+              message: 'Database error.',
               code: 500
             }
             next(errorObject)
           }
           if (rows) {
 
-            // console.log("PAASSS!!!!! : " + rows[0].Password);
-            // console.log("WUUUU!!!!! : " + req.body.Password);
+            // Means we have a results
 
-
-            // Als we hier zijn:
+            
             if (rows.length === 0 || req.body.Password !== rows[0].Password) {
               const errorObject = {
                 message: 'Geen toegang: email bestaat niet of password is niet correct!',
@@ -117,7 +149,7 @@ module.exports = {
 
       validateToken: (req, res, next) => {
         console.log('validateToken aangeroepen')
-        // logger.debug(req.headers)
+
         const authHeader = req.headers.authorization
         if (!authHeader) {
           errorObject = {
@@ -154,7 +186,7 @@ module.exports = {
               message: 'UserId is missing!',
               code: 401
             }
-            logger.warn('Validate token failed: ', errorObject.message)
+
             next(errorObject)
           }
         })

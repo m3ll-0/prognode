@@ -9,12 +9,6 @@ const port = process.env.port || 3000;
 
 app.use(express.json());
 
-// Generic end-point handler
-app.all('*', (req, res, next) => {
-    console.log("Generic endpoint handler!");
-    next();
-})
-
 // Using routes
 app.use('/api/', authRoutes);
 app.use('/api/appartments', appartmentRoutes);
@@ -34,10 +28,9 @@ app.all('*', (req, res, next) => {
 // Error handler
 app.use((error, req, res, next) => {
     console.log(error.message.toString());
-    
     res.status(error.code).json(error)
   })
 
-app.listen(port, ()=> console.log("listening on port sumfing"));
+app.listen(port, ()=> console.log("listening on port "+port));
 
 module.exports = app;

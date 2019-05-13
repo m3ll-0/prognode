@@ -1,7 +1,5 @@
-// Import database
-// Route controllers
-
 const database = require('../datalayer/mssql.dao');
+var postcode = require('postcode-validator');
 
 module.exports = {
 
@@ -19,6 +17,7 @@ module.exports = {
                     code: 500
                 }
                 next(errorObject);
+                
             }
             if(rows){
                 res.status(200).json({result: rows});
@@ -28,8 +27,21 @@ module.exports = {
 
     createAppartment: (req, res, next) => {
         console.log("createAppartment called");
-
         const appartment = req.body;
+
+        // Check if postalcode is valid
+        if(!postcode.validate(appartment.PostalCode, 'NL')) // returns true
+        {
+            console.log("Not valid");
+            errorObject = {
+                message : 'Postal code is not valid!',
+                code : 500
+            }
+
+            next(errorObject);
+            return;
+        }
+
         const query = `INSERT INTO Apartment VALUES('${appartment.Description}', '${appartment.StreetAddress}', '${appartment.PostalCode}', '${appartment.City}', ${appartment.UserId} )`;
 
         database.executeQuery(query, (err, rows) => {

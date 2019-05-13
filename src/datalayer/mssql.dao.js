@@ -9,7 +9,7 @@ module.exports = {
     sql.connect(dbconfig, err => {
       // ... error checks
       if (err) {
-        logger.error('Error connecting: ', err.toString())
+        console.log('Error connecting: ' + err.toString())
         callback(err, null)
         sql.close()
       }
@@ -18,12 +18,12 @@ module.exports = {
         new sql.Request().query(query, (err, result) => {
           // ... error checks
           if (err) {
-            logger.error('error', err.toString())
+            console.log('error', err.toString())
             callback(err, null)
             sql.close()
           }
           if (result) {
-            logger.info(result)
+            console.log(result);
             // result.recordset.forEach(item => console.log(item.number))
             callback(null, result.recordset)
             sql.close()
