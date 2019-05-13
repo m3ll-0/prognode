@@ -1,4 +1,4 @@
-// imports
+// Imports
 const jwt = require('jsonwebtoken');
 const database = require('../datalayer/mssql.dao');
 const assert = require('assert');
@@ -71,11 +71,11 @@ module.exports = {
 
         const query = `INSERT INTO DBUser VALUES ( '${user.FirstName}', '${user.LastName}', '${user.StreetAddress}', '${user.PostalCode}', '${user.City}', '${user.DateOfBirth}', '${user.PhoneNumber}', '${user.EmailAddress}', '${user.Password}' )`;
 
-        database.executeQuery(query, (err, rows) => {
+        database.dbQuery(query, (err, rows) => {
             // verwerk error of result
             if (err) {
               const errorObject = {
-                message: 'Er ging iets mis in de database.',
+                message: 'Database error.',
                 code: 500
               }
               next(errorObject)
@@ -90,14 +90,11 @@ module.exports = {
 
         console.log("loginUser");
         
-        const user = req.body;
-
-        // TODO: Verify correct fields
-    
+        const user = req.body;    
         const query = `SELECT Password, UserId FROM [DBUser] WHERE EmailAddress='${user.EmailAddress}'`
 
-        database.executeQuery(query, (err, rows) => {
-          // verwerk error of result
+        database.dbQuery(query, (err, rows) => {
+
           if (err) {
             const errorObject = {
               message: 'Database error.',
@@ -107,29 +104,22 @@ module.exports = {
           }
           if (rows) {
 
-            // Means we have a results
-
-            
             if (rows.length === 0 || req.body.Password !== rows[0].Password) {
               const errorObject = {
-                message: 'Geen toegang: email bestaat niet of password is niet correct!',
+                message: 'No authorization.',
                 code: 401
               }
               next(errorObject)
-            } else {
-    
-            console.log('Password match, user logged id');
-            console.log(rows.recordset)
-
-              // Maak de payload, die we in het token stoppen.
-              // De payload kunnen we er bij het verifiëren van het token later weer uithalen.
+            } else 
+            {
+              // Put userId in payload
               const payload = {
                 UserId: rows[0].UserId
               }
               jwt.sign({ data: payload }, 'secretkey', { expiresIn: 60 * 60 }, (err, token) => {
                 if (err) {
                   const errorObject = {
-                    message: 'Kon geen JWT genereren.',
+                    message: 'Can not generate JWT token.',
                     code: 500
                   }
                   next(errorObject)
@@ -138,8 +128,7 @@ module.exports = {
                   res.status(200).json({
                     result: {
                       token: token
-                    }
-                  })
+                    }})
                 }
               })
             }
@@ -148,40 +137,37 @@ module.exports = {
       },
 
       validateToken: (req, res, next) => {
-        console.log('validateToken aangeroepen')
+        
+        console.log('validateToken')
 
-        const authHeader = req.headers.authorization
-        if (!authHeader) {
+        const token = req.headers.authorization
+
+        if (!token) {
           errorObject = {
-            message: 'Authorization header missing!',
+            message: 'No Authorization header!',
             code: 401
           }
-          console.log('Validate token failed: ', errorObject.message)
+
           return next(errorObject)
         }
-        //const token = authHeader.substring(7, authHeader.length)
-        const token = authHeader;
-        console.log("TOKEN: " + token);
 
+        // Verify token
         jwt.verify(token, 'secretkey', (err, payload) => {
           if (err) {
             errorObject = {
               message: 'not authorized',
               code: 401
             }
-            console.log('Validate token failed: '+ errorObject.message)
             next(errorObject)
           }
-          console.log('payload' + payload)
 
-
+          // Token is valid
           if (payload.data && payload.data.UserId) {
-            console.log('token is valid' + payload)
-            // User heeft toegang. Voeg UserId uit payload toe aan
-            // request, voor ieder volgend endpoint.
             req.userId = payload.data.UserId
             next()
-          } else {
+
+          } 
+          else {
             errorObject = {
               message: 'UserId is missing!',
               code: 401
@@ -191,5 +177,4 @@ module.exports = {
           }
         })
       },
-
 }

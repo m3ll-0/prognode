@@ -9,11 +9,11 @@ module.exports = {
 
         const query = "SELECT * FROM Apartment JOIN Reservation ON Apartment.ApartmentId = Reservation.ApartmentId JOIN DBUser ON Reservation.UserId = DBUser.UserId;";
 
-        database.executeQuery(query, (err, rows) => {
+        database.dbQuery(query, (err, rows) => {
             // handle result
             if(err){
                 const errorObject = {
-                    message: 'Er is iets misgegaan',
+                    message: 'Error',
                     code: 500
                 }
                 next(errorObject);
@@ -44,11 +44,11 @@ module.exports = {
 
         const query = `INSERT INTO Apartment VALUES('${appartment.Description}', '${appartment.StreetAddress}', '${appartment.PostalCode}', '${appartment.City}', ${appartment.UserId} )`;
 
-        database.executeQuery(query, (err, rows) => {
+        database.dbQuery(query, (err, rows) => {
 
             if(err){
                 const errorObject = {
-                    message: 'Er is iets misgegaan',
+                    message: 'Error',
                     code: 500
                 }
                 next(errorObject);
@@ -64,10 +64,10 @@ module.exports = {
         const id = req.params.id;
         const query = `SELECT * FROM Apartment WHERE Apartment.ApartmentId=${id}`;
 
-        database.executeQuery(query, (err, rows) => {
+        database.dbQuery(query, (err, rows) => {
             if(err){
                 const errorObject = {
-                    message: 'Er is iets misgegaan',
+                    message: 'Error',
                     code: 500
                 }
                 next(errorObject);
@@ -90,11 +90,11 @@ module.exports = {
 
         const query = `UPDATE Apartment SET Apartment.Description = '${appartment.Description}', Apartment.StreetAddress = '${appartment.StreetAddress}', Apartment.PostalCode = '${appartment.PostalCode}', Apartment.City = '${appartment.City}' WHERE Apartment.ApartmentId = ${id};`;
 
-        database.executeQuery(query, (err, rows) => {
+        database.dbQuery(query, (err, rows) => {
 
             if(err){
                 const errorObject = {
-                    message: 'Er is iets misgegaan',
+                    message: 'Error',
                     code: 500
                 }
                 next(errorObject);
@@ -112,11 +112,11 @@ module.exports = {
         const id = req.params.id;
         const query = `DELETE FROM Apartment WHERE Apartment.ApartmentId=${id}`;
 
-        database.executeQuery(query, (err, rows) => {
+        database.dbQuery(query, (err, rows) => {
 
             if(err){
                 const errorObject = {
-                    message: 'Er is iets misgegaan',
+                    message: 'Error',
                     code: 500
                 }
                 next(errorObject);
@@ -135,11 +135,11 @@ module.exports = {
 
         console.log(query);
 
-        database.executeQuery(query, (err, rows) => {
+        database.dbQuery(query, (err, rows) => {
 
             if(err){
                 const errorObject = {
-                    message: 'Er is iets misgegaan',
+                    message: 'Error',
                     code: 500
                 }
                 next(errorObject);
@@ -156,11 +156,11 @@ module.exports = {
         const id = req.params.id;
         query = `SELECT * FROM Reservation WHERE Reservation.ApartmentId = ${id};`;
 
-        database.executeQuery(query, (err, rows) => {
+        database.dbQuery(query, (err, rows) => {
 
             if(err){
                 const errorObject = {
-                    message: 'Er is iets misgegaan',
+                    message: 'Error',
                     code: 500
                 }
                 next(errorObject);
@@ -179,11 +179,11 @@ module.exports = {
 
         const query = `SELECT * FROM Reservation WHERE Reservation.ApartmentId = ${id} AND Reservation.ReservationId = ${rid};`;
 
-        database.executeQuery(query, (err, rows) => {
+        database.dbQuery(query, (err, rows) => {
 
             if(err){
                 const errorObject = {
-                    message: 'Er is iets misgegaan',
+                    message: 'Error',
                     code: 500
                 }
                 next(errorObject);
@@ -203,11 +203,11 @@ module.exports = {
 
         const query = `UPDATE Reservation SET Reservation.Status = '${Registration.Status}' WHERE Reservation.reservationId=${rid} AND Reservation.ApartmentId=${id};`;
 
-        database.executeQuery(query, (err, rows) => {
+        database.dbQuery(query, (err, rows) => {
 
             if(err){
                 const errorObject = {
-                    message: 'Er is iets misgegaan',
+                    message: 'Error',
                     code: 500
                 }
                 next(errorObject);
@@ -226,11 +226,11 @@ module.exports = {
         
         const query = `DELETE FROM Reservation WHERE Reservation.reservationId = ${rid} AND Reservation.apartmentId = ${id}`;
 
-        database.executeQuery(query, (err, rows) => {
+        database.dbQuery(query, (err, rows) => {
 
             if(err){
                 const errorObject = {
-                    message: 'Er is iets misgegaan',
+                    message: 'Error',
                     code: 500
                 }
                 next(errorObject);
