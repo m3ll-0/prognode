@@ -1,5 +1,5 @@
 const database = require('../datalayer/mssql.dao');
-var postcode = require('postcode-validator');
+const postalcodeValidator = new RegExp('^[1-9][0-9]{3} ?(?!sa|sd|ss)[a-z]{2}$');
 
 module.exports = {
 
@@ -30,16 +30,15 @@ module.exports = {
         const appartment = req.body;
 
         // Check if postalcode is valid
-        if(!postcode.validate(appartment.PostalCode, 'NL')) // returns true
+        if(postalcodeValidator.test(user.PostalCode) != true)
         {
-            console.log("Not valid");
-            errorObject = {
-                message : 'Postal code is not valid!',
-                code : 500
-            }
+          errorObject = {
+            message : 'Postal Code is not valid!',
+            code : 500
+          } 
 
-            next(errorObject);
-            return;
+          next(errorObject);
+          return;
         }
 
         const query = `INSERT INTO Apartment VALUES('${appartment.Description}', '${appartment.StreetAddress}', '${appartment.PostalCode}', '${appartment.City}', ${appartment.UserId} )`;

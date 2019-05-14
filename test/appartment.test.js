@@ -42,17 +42,11 @@ describe('AppartmentDatabase', () => {
       }
       if (rows) {
 
-        if (rows.length === 0 || req.body.Password !== rows[0].Password) {
-          const errorObject = {
-            message: 'No authorization.',
-            code: 401
-          }
-          done(errorObject)
-        } else 
-        {
           const payload = {
             UserId: rows[0].UserId
+    
           }
+    
           jwt.sign({ data: payload }, 'secretkey', { expiresIn: 60 * 60 }, (err, token) => {
             if (err) {
               const errorObject = {
@@ -65,7 +59,6 @@ describe('AppartmentDatabase', () => {
                 done();
             }
           })
-        }
       }
     })
   })

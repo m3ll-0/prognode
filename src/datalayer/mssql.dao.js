@@ -23,7 +23,7 @@ module.exports = {
         // Query
         new mssql.Request().query(query, (error, result) => {
           if (error) {
-            console.log('error', err.toString())
+            console.log('error', error.toString())
             callback(error, null)
             mssql.close()
           }

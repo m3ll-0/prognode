@@ -2,9 +2,12 @@
 const jwt = require('jsonwebtoken');
 const database = require('../datalayer/mssql.dao');
 const assert = require('assert');
-const validatePhoneNumber = require('validate-phone-number-node-js');
-var postcode = require('postcode-validator');
+
 var validator = require("email-validator");
+
+const postalcodeValidator = new RegExp('^[1-9][0-9]{3} ?(?!sa|sd|ss)[a-z]{2}$');
+const phoneValidator = new RegExp('^06(| |-)[0-9]{8}$')
+const emailValidator = new RegExp("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$");
 
 module.exports = {
 
@@ -16,11 +19,11 @@ module.exports = {
     
         // Verify correct fields
         try {
-            // Check if email is correct
-            if(!validator.validate(user.EmailAddress))
+
+            if(emailValidator.test(user.EmailAddress) != true)
             {
               errorObject = {
-                message : 'Email is not valid!',
+                message : 'Email address is not valid!',
                 code : 500
               } 
 
@@ -29,7 +32,7 @@ module.exports = {
             }
 
             // Check if phone number is correct
-            if(!validatePhoneNumber.validate(user.PhoneNumber))
+            if(! phoneValidator.test(user.phoneNumber) != true)
             {
               errorObject = {
                 message : 'Phone number is not valid!',
@@ -39,17 +42,19 @@ module.exports = {
               next(errorObject);
               return;
             }
-            // Check if postalcode is valid
-            if(!postcode.validate(user.PostalCode, 'NL')) // returns true
-            {
-                errorObject = {
-                    message : 'Postal code is not valid!',
-                    code : 500
-                }
 
-                next(errorObject);
-                return;
+            // Check postal code
+            if(postalcodeValidator.test(user.PostalCode) != true)
+            {
+              errorObject = {
+                message : 'Postal Code is not valid!',
+                code : 500
+              } 
+
+              next(errorObject);
+              return;
             }
+            
 
             // Assert to test data types
             assert.equal(typeof user.FirstName, 'string', 'FirstName is required.');
