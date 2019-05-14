@@ -32,8 +32,9 @@ module.exports = {
           if (result) {
             console.log(result);
 
+            // Do callback AFTER sending result
+            mssql.close();
             callback(null, result.recordset)
-            mssql.close()
           }
         })
       }

@@ -167,6 +167,7 @@ module.exports = {
           }
 
           // Token is valid
+          try{
           if (payload.data && payload.data.UserId) {
             req.userId = payload.data.UserId
             next()
@@ -180,6 +181,15 @@ module.exports = {
 
             next(errorObject)
           }
+        }
+        catch{
+          errorObject = {
+            message: 'Error in reading JWT token!',
+            code: 500
+          }
+
+          next(errorObject);
+        }
         })
       },
 }
