@@ -1,5 +1,6 @@
 const assert = require('assert')
 const database = require('../src/datalayer/mssql.dao')
+const jwt = require('jsonwebtoken');
 
 describe('AppartmentDatabase', () => {
   // Testcase
