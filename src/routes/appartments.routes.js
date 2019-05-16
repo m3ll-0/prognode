@@ -15,4 +15,15 @@ router.get('/:id/reservations/:rid', authController.validateToken, appartmentsCo
 router.put('/:id/reservations/:rid', authController.validateToken, appartmentsController.updateReservationStatus);
 router.delete('/:id/reservations/:rid', authController.validateToken, appartmentsController.deleteReservationByAppartment);
 
+// router.get('/', appartmentsController.getAllAppartments);
+// router.post('/', appartmentsController.createAppartment);
+// router.get('/:id', appartmentsController.getAppartment);
+// router.put('/:id', appartmentsController.updateAppartment);
+// router.delete('/:id', appartmentsController.deleteAppartment);
+// router.post('/:id/reservations',  appartmentsController.createReservation);
+// router.get('/:id/reservations',  appartmentsController.getAllReservationsByAppartment);
+// router.get('/:id/reservations/:rid',  appartmentsController.getReservationByAppartment);
+// router.put('/:id/reservations/:rid',  appartmentsController.updateReservationStatus);
+// router.delete('/:id/reservations/:rid', appartmentsController.deleteReservationByAppartment);
+
 module.exports = router;

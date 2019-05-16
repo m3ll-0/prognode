@@ -1,32 +1,40 @@
-const sql = require('mssql')
+const mssql = require('mssql')
 const config = require('../config/appconfig')
 
-const logger = config.logger
 const dbconfig = config.dbconfig
 
 module.exports = {
-  executeQuery: (query, callback) => {
-    sql.connect(dbconfig, err => {
-      // ... error checks
-      if (err) {
-        logger.error('Error connecting: ', err.toString())
-        callback(err, null)
-        sql.close()
+
+  //
+  // Do database query
+  //
+  dbQuery: (query, callback) => {
+
+    mssql.connect(dbconfig, error => {
+      // Error check
+      if (error) {
+        console.log(error.toString());
+        callback(error, null);
+
+        // close connection 
+        mssql.close();
       }
-      if (!err) {
+      if (!error) {
         // Query
-        new sql.Request().query(query, (err, result) => {
-          // ... error checks
-          if (err) {
-            logger.error('error', err.toString())
-            callback(err, null)
-            sql.close()
+        new mssql.Request().query(query, (error, result) => {
+          if (error) {
+            console.log('error', error.toString())
+            callback(error, null)
+            mssql.close()
           }
+
+          // Result is correct
           if (result) {
-            logger.info(result)
-            // result.recordset.forEach(item => console.log(item.number))
+            console.log(result);
+
+            // Do callback AFTER sending result
+            mssql.close();
             callback(null, result.recordset)
-            sql.close()
           }
         })
       }

@@ -1,30 +1,71 @@
+// Imports
 const jwt = require('jsonwebtoken');
 const database = require('../datalayer/mssql.dao');
 const assert = require('assert');
 
-const phoneValidator = new RegExp('^06(| |-)[0-9]{8}$');
+var validator = require("email-validator");
 
+const postalcodeValidator = new RegExp('^[1-9][0-9]{3} ?(?!sa|sd|ss)[a-z]{2}$');
+const phoneValidator = new RegExp('^06(| |-)[0-9]{8}$')
+const emailValidator = new RegExp("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$");
 
 module.exports = {
 
     registerUser: (req, res, next) => {
+
         console.log("registerUser");
 
         const user = req.body;
     
         // Verify correct fields
         try {
+
+            if(emailValidator.test(user.EmailAddress) != true)
+            {
+              errorObject = {
+                message : 'Email address is not valid!',
+                code : 500
+              } 
+
+              next(errorObject);
+              return;
+            }
+
+            // Check if phone number is correct
+            if(! phoneValidator.test(user.phoneNumber) != true)
+            {
+              errorObject = {
+                message : 'Phone number is not valid!',
+                code : 500
+              } 
+
+              next(errorObject);
+              return;
+            }
+
+            // Check postal code
+            if(postalcodeValidator.test(user.PostalCode) != true)
+            {
+              errorObject = {
+                message : 'Postal Code is not valid!',
+                code : 500
+              } 
+
+              next(errorObject);
+              return;
+            }
+            
+
+            // Assert to test data types
             assert.equal(typeof user.FirstName, 'string', 'FirstName is required.');
             assert.equal(typeof user.LastName, 'string', 'LastName is required.');
             assert.equal(typeof user.StreetAddress, 'string', 'StreetAddress is required.');
-            assert.equal(typeof user.FirstName, 'string', 'PostalCode is required.');
+            assert.equal(typeof user.PostalCode, 'string', 'PostalCode is required.');
             assert.equal(typeof user.City, 'string', 'City is required.');
             assert.equal(typeof user.DateOfBirth, 'string', 'DateOfBirth is required.');
             assert.equal(typeof user.PhoneNumber, 'string', 'PhoneNumber is required.');
             assert.equal(typeof user.EmailAddress, 'string', 'EmailAddress is required.');
             assert.equal(typeof user.Password, 'string', 'Password is required.');
-
-            assert(phoneValidator.test(user.PhoneNumber), 'A valid phoneNumber is required.')
           } catch (ex) {
             const errorObject = {
               message: 'Validation fails: ' + ex.toString(),
@@ -35,17 +76,17 @@ module.exports = {
 
         const query = `INSERT INTO DBUser VALUES ( '${user.FirstName}', '${user.LastName}', '${user.StreetAddress}', '${user.PostalCode}', '${user.City}', '${user.DateOfBirth}', '${user.PhoneNumber}', '${user.EmailAddress}', '${user.Password}' )`;
 
-        database.executeQuery(query, (err, rows) => {
+        database.dbQuery(query, (err, rows) => {
             // verwerk error of result
             if (err) {
               const errorObject = {
-                message: 'Er ging iets mis in de database.',
+                message: 'Database error.',
                 code: 500
               }
               next(errorObject)
             }
-            if (rows) {
-              res.status(200).json({ result: rows.recordset })
+            else {
+              res.status(200).json({})
             }
           })
     },
@@ -54,50 +95,36 @@ module.exports = {
 
         console.log("loginUser");
         
-        const user = req.body;
-
-        // TODO: Verify correct fields
-    
+        const user = req.body;    
         const query = `SELECT Password, UserId FROM [DBUser] WHERE EmailAddress='${user.EmailAddress}'`
 
-        // console.log(query);
+        database.dbQuery(query, (err, rows) => {
 
-        database.executeQuery(query, (err, rows) => {
-          // verwerk error of result
           if (err) {
             const errorObject = {
-              message: 'Er ging iets mis in de database.',
+              message: 'Database error.',
               code: 500
             }
             next(errorObject)
           }
           if (rows) {
 
-            // console.log("PAASSS!!!!! : " + rows[0].Password);
-            // console.log("WUUUU!!!!! : " + req.body.Password);
-
-
-            // Als we hier zijn:
             if (rows.length === 0 || req.body.Password !== rows[0].Password) {
               const errorObject = {
-                message: 'Geen toegang: email bestaat niet of password is niet correct!',
+                message: 'No authorization.',
                 code: 401
               }
               next(errorObject)
-            } else {
-    
-            console.log('Password match, user logged id');
-            console.log(rows.recordset)
-
-              // Maak de payload, die we in het token stoppen.
-              // De payload kunnen we er bij het verifiëren van het token later weer uithalen.
+            } else 
+            {
+              // Put userId in payload
               const payload = {
                 UserId: rows[0].UserId
               }
               jwt.sign({ data: payload }, 'secretkey', { expiresIn: 60 * 60 }, (err, token) => {
                 if (err) {
                   const errorObject = {
-                    message: 'Kon geen JWT genereren.',
+                    message: 'Can not generate JWT token.',
                     code: 500
                   }
                   next(errorObject)
@@ -106,8 +133,7 @@ module.exports = {
                   res.status(200).json({
                     result: {
                       token: token
-                    }
-                  })
+                    }})
                 }
               })
             }
@@ -116,48 +142,54 @@ module.exports = {
       },
 
       validateToken: (req, res, next) => {
-        console.log('validateToken aangeroepen')
-        // logger.debug(req.headers)
-        const authHeader = req.headers.authorization
-        if (!authHeader) {
+        
+        console.log('validateToken')
+
+        const token = req.headers.authorization
+
+        if (!token) {
           errorObject = {
-            message: 'Authorization header missing!',
+            message: 'No Authorization header!',
             code: 401
           }
-          console.log('Validate token failed: ', errorObject.message)
+
           return next(errorObject)
         }
-        //const token = authHeader.substring(7, authHeader.length)
-        const token = authHeader;
-        console.log("TOKEN: " + token);
 
+        // Verify token
         jwt.verify(token, 'secretkey', (err, payload) => {
           if (err) {
             errorObject = {
               message: 'not authorized',
               code: 401
             }
-            console.log('Validate token failed: '+ errorObject.message)
             next(errorObject)
           }
-          console.log('payload' + payload)
 
-
+          // Token is valid
+          try{
           if (payload.data && payload.data.UserId) {
-            console.log('token is valid' + payload)
-            // User heeft toegang. Voeg UserId uit payload toe aan
-            // request, voor ieder volgend endpoint.
             req.userId = payload.data.UserId
             next()
-          } else {
+
+          } 
+          else {
             errorObject = {
               message: 'UserId is missing!',
               code: 401
             }
-            logger.warn('Validate token failed: ', errorObject.message)
+
             next(errorObject)
           }
+        }
+        catch{
+          errorObject = {
+            message: 'Error in reading JWT token!',
+            code: 500
+          }
+
+          next(errorObject);
+        }
         })
       },
-
 }
