@@ -111,10 +111,6 @@ module.exports = {
             }
             next(errorObject)
           }
-          console.log('XXXXXXXXXX');
-          console.log(rows)
-          console.log('XXXXXXXXXX');
-
 
           if (rows.length != []) {
 
