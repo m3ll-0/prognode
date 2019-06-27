@@ -1,4 +1,19 @@
 module.exports = {
+
+  logger: require('tracer').colorConsole({
+    format: [
+        '{{timestamp}} <{{title}}> {{message}} (in {{file}}:{{line}})', //default format
+        {
+            error: '{{timestamp}} <{{title}}> {{message}} (in {{file}}:{{line}})' // error format
+        }
+    ],
+    dateformat: 'HH:MM:ss.L',
+    preprocess: function(data) {
+        data.title = data.title.toUpperCase()
+    },
+    level: process.env.LOG_LEVEL || 'trace'
+}),
+
     dbconfig: {
       user: '23ivt1c1',
       password: '*;&?3Ed@H@:i',

@@ -97,7 +97,7 @@ module.exports = {
         
         const user = req.body;    
         const query = `SELECT Password, UserId FROM [DBUser] WHERE EmailAddress='${user.EmailAddress}'`
-
+      
         database.dbQuery(query, (err, rows) => {
 
           if (err) {
@@ -121,7 +121,7 @@ module.exports = {
               const payload = {
                 UserId: rows[0].UserId
               }
-              jwt.sign({ data: payload }, 'secretkey', { expiresIn: 60 * 60 }, (err, token) => {
+              jwt.sign({ data: payload }, 'somekeythatwillwork', { expiresIn: 60 * 60 }, (err, token) => {
                 if (err) {
                   const errorObject = {
                     message: 'Can not generate JWT token.',
@@ -157,7 +157,7 @@ module.exports = {
         }
 
         // Verify token
-        jwt.verify(token, 'secretkey', (err, payload) => {
+        jwt.verify(token, 'somekeythatwillwork', (err, payload) => {
           if (err) {
             errorObject = {
               message: 'not authorized',
