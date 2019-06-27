@@ -7,7 +7,12 @@ module.exports = {
         
         console.log("getAllAppartments called");
 
-        const query = "SELECT * FROM Apartment JOIN Reservation ON Apartment.ApartmentId = Reservation.ApartmentId JOIN DBUser ON Reservation.UserId = DBUser.UserId;";
+        const query = `select a.*, u.firstname, u.lastname, r.startdate, r.enddate, r.status
+        from apartment as a
+            join dbuser as u on u.userid = a.userid
+            join reservation as r on r.apartmentid = a.apartmentid`;
+
+        // OLD SELECT * FROM Apartment LEFT JOIN Reservation ON Apartment.ApartmentId = Reservation.ApartmentId LEFT JOIN DBUser ON Reservation.UserId = DBUser.UserId;
 
         database.dbQuery(query, (err, rows) => {
             // handle result
@@ -30,11 +35,23 @@ module.exports = {
         const appartment = req.body;
         const userId = req.userId;
 
+        // Check if fields are present
+        if(!appartment.hasOwnProperty("City") || !appartment.hasOwnProperty("PostalCode") || !appartment.hasOwnProperty("StreetAddress"))
+        {
+            errorObject = {
+                message : 'One or more mandatory fields are empty.',
+                code : 500
+              } 
+    
+              next(errorObject);
+              return;
+        }
+
         // Check if postalcode is valid
         if(postalcodeValidator.test(appartment.PostalCode) != true)
         {
           errorObject = {
-            message : 'Postal Code is not valid!',
+            message : 'Postal Code is not valid.',
             code : 500
           } 
 
@@ -42,7 +59,7 @@ module.exports = {
           return;
         }
 
-        const query = `INSERT INTO Apartment VALUES('${appartment.Description}', '${appartment.StreetAddress}', '${appartment.PostalCode}', '${appartment.City}', ${userId} )`;
+        const query = `INSERT INTO Apartment VALUES('${appartment.Description}', '${appartment.StreetAddress}', '${appartment.PostalCode}', '${appartment.City}', ${userId} ); SELECT SCOPE_IDENTITY() AS id;`;
 
         console.log(query);
 
@@ -55,7 +72,7 @@ module.exports = {
                 }
                 next(errorObject);
             }else{
-                res.status(200).json({result: 200});
+                res.status(200).json({"Description" : appartment.Description, "StreetAddress" : appartment.StreetAddress, "PostalCode" : appartment.PostalCode, "City" : appartment.City, "userId" : userId, "ApartmentId" : rows[0].id} );
             }
         })
     },
@@ -64,7 +81,12 @@ module.exports = {
         console.log("getAppartment called");
 
         const id = req.params.id;
-        const query = `SELECT * FROM Apartment INNER JOIN DBUser ON Apartment.UserId = DBUser.UserId INNER JOIN Reservation ON Reservation.ApartmentId = Apartment.ApartmentId WHERE Apartment.ApartmentId=${id}`;
+        //const query = `SELECT * FROM Apartment INNER JOIN DBUser ON Apartment.UserId = DBUser.UserId INNER JOIN Reservation ON Reservation.ApartmentId = Apartment.ApartmentId WHERE Apartment.ApartmentId=${id}`;
+        const query = `select a.*, u.firstname, u.lastname, r.startdate, r.enddate, r.status
+        from apartment as a
+            join dbuser as u on u.userid = a.userid
+            join reservation as r on r.apartmentid = a.apartmentid
+        where a.ApartmentId=${id}`;
 
         database.dbQuery(query, (err, rows) => {
             if(err){
@@ -80,7 +102,7 @@ module.exports = {
                 if(rows.length == 0)
                 {
                     const errorObject = {
-                        message: 'Appartment does not exist!',
+                        message: 'Appartment does not exist.',
                         code: 404
                     }
                     next(errorObject);
@@ -102,11 +124,23 @@ module.exports = {
         const appartment = req.body;
         const id = req.params.id;
 
+        // Check if object is empty
+        if(Object.keys(appartment).length === 0)
+        {
+            errorObject = {
+                message : 'Object is empty.',
+                code : 500
+              } 
+    
+              next(errorObject);
+              return;
+        }
+
         // Check if postalcode is valid
         if(postalcodeValidator.test(appartment.PostalCode) != true)
         {
           errorObject = {
-            message : 'Postal Code is not valid!',
+            message : 'Postal Code is not valid.',
             code : 500
           } 
 
@@ -130,19 +164,14 @@ module.exports = {
         })
     },
 
-    //TODO: Authenticate user, he's the only one to delete it
     deleteAppartment: (req, res, next) => {
         
         console.log("deleteAppartment");
 
         const id = req.params.id;
-        const callerUserId = req.userId;
         const queryDelete = `DELETE FROM Apartment WHERE Apartment.ApartmentId=${id}`;
-        const queryCheck = `SELECT * FROM Apartment WHERE Apartment.ApartmentId=${id} AND Apartment.UserId = ${callerUserId}`
 
-        console.log(queryCheck);
-
-        database.dbQuery(queryCheck, (err, rows) => {
+        database.dbQuery(queryDelete, (err, rows) => {
 
             if(err){
                 const errorObject = {
@@ -151,32 +180,11 @@ module.exports = {
                 }
                 next(errorObject);
             }else{
-                if(rows.length == 0)
-                {
-                    const errorObject = {
-                        message: 'You are not authorized to delete apartment or object does not exist.',
-                        code: 401
-                    }
-                    next(errorObject);
-                }
-                else{
-                    database.dbQuery(queryDelete, (err, rows) => {
+                console.log();
 
-                        if(err){
-                            const errorObject = {
-                                message: 'Error',
-                                code: 500
-                            }
-                            next(errorObject);
-                        }else{
-                            res.status(200).json({});
-                        }
-                    })
-                }
+                res.status(200).json(req.appartment);
             }
-        })
-
-
+        });
     },
 
     createReservation: (req, res, next) => {
@@ -185,7 +193,7 @@ module.exports = {
         const reservation = req.body;
         const userId = req.userId;
 
-        const query = `INSERT INTO Reservation VALUES(${id}, '${reservation.StartDate}', '${reservation.EndDate}', '${reservation.Status}', ${userId});`;
+        const query = `INSERT INTO Reservation VALUES(${id}, '${reservation.StartDate}', '${reservation.EndDate}', '${reservation.Status}', ${userId});  SELECT SCOPE_IDENTITY() AS id;`;
 
         // Check dates
         if(Date.parse(reservation.EndDate) < Date.parse(reservation.StartDate))
@@ -208,7 +216,7 @@ module.exports = {
                 }
                 next(errorObject);
             }else{
-                res.status(200).json({});
+                res.status(200).json({"ReservationId" : rows[0].id});
             }
         })
     },
@@ -229,7 +237,18 @@ module.exports = {
                 }
                 next(errorObject);
             }else{
-                res.status(200).json({Result: rows});
+
+                if(rows == 0)
+                {
+                    const errorObject = {
+                        message: 'Appartment does not exist.',
+                        code: 404
+                    }
+                    next(errorObject);       
+                }
+                else{
+                    res.status(200).json({Result: rows});
+                }
             }
         })
     },
@@ -351,5 +370,166 @@ module.exports = {
             }
         })
 
+    },
+
+    checkAppartment: (req, res ,next) => {
+        console.log("checkAppartment called");
+
+        const id = req.params.id;
+        const query = `SELECT * FROM Apartment WHERE ApartmentId=${id}`;
+
+        database.dbQuery(query, (err, rows) => {
+            if(err){
+                const errorObject = {
+                    message: 'Error',
+                    code: 500
+                }
+
+                return res.status(500).json(errorObject);
+
+            }            
+            else{
+
+                // Check if appartment exists
+                if(rows.length == 0)
+                {
+                    const errorObject = {
+                        message: 'Appartment does not exist.',
+                        code: 404
+                    }
+
+                    return res.status(404).json(errorObject);
+
+                }
+                else{
+
+                    req.appartment = rows;
+                    next();
+                }
+            }
+
+        });
+    },
+
+    checkOwner: (req, res ,next) => {
+        console.log("checkOwner called");
+        console.log(req.userId);
+
+        const id = req.params.id;
+        const userId = req.userId;
+        
+        const query = `SELECT UserId FROM Apartment WHERE ApartmentId=${id}`;
+
+        database.dbQuery(query, (err, rows) => {
+            if(err){
+                const errorObject = {
+                    message: 'Error',
+                    code: 500
+                }
+
+                return res.status(500).json(errorObject);
+                
+            }            
+            else{
+
+                // Check if user id is the same
+                if(userId == rows[0].UserId)
+                {
+                    next();
+                }
+                else{
+                    const errorObject = {
+                        message: 'Caller is not the owner of the appartment.',
+                        code: 401
+                    }
+
+                    return res.status(401).json(errorObject);
+                }
+            }
+
+        });
+    },
+
+    checkReservationOwner: (req, res ,next) => {
+        console.log("checkReservationOwner called");
+        console.log(req.userId);
+
+        const id = req.params.id;
+        const userId = req.userId;
+        const rid = req.params.rid;
+
+        const query = `SELECT UserId FROM Reservation WHERE ReservationId=${rid}`;
+
+        database.dbQuery(query, (err, rows) => {
+            if(err){
+                const errorObject = {
+                    message: 'Error',
+                    code: 500
+                }
+
+                return res.status(500).json(errorObject);
+                
+            }            
+            else{
+
+                // Check if user id is the same
+                if(userId == rows[0].UserId)
+                {
+                    next();
+                }
+                else{
+                    const errorObject = {
+                        message: 'Caller is not the owner of the reservation.',
+                        code: 401
+                    }
+
+                    return res.status(401).json(errorObject);
+                }
+            }
+
+        });
+    },
+
+    checkReservation: (req, res ,next) => {
+        console.log("checkReservation called");
+
+        const rid = req.params.rid;
+        const id = req.params.id;
+        
+        const query = `SELECT * FROM Reservation WHERE Reservation.ApartmentId = ${id} AND Reservation.ReservationId = ${rid}`;
+
+        database.dbQuery(query, (err, rows) => {
+            if(err){
+                const errorObject = {
+                    message: 'Error',
+                    code: 500
+                }
+
+                return res.status(500).json(errorObject);
+
+            }            
+            else{
+
+                // Check if reservation exists
+                if(rows.length == 0)
+                {
+                    const errorObject = {
+                        message: 'Reservation does not exist.',
+                        code: 404
+                    }
+
+                    return res.status(404).json(errorObject);
+
+                }
+                else{
+
+                    req.reservation = rows;
+                    next();
+                }
+            }
+
+        });
     }
 }
+
+

@@ -1,43 +1,53 @@
-const mssql = require('mssql')
-const config = require('../config/appconfig')
-
-const dbconfig = config.dbconfig
+const config = require('../config/appconfig');
+const { poolPromise } = require('../config/pooling')
+const { sql } = require('../config/pooling')
+const logger = require('../config/appconfig').logger
 
 module.exports = {
 
-  //
-  // Do database query
-  //
-  dbQuery: (query, callback) => {
+  dbQuery: async (query, callback) => {
+      logger.info('dbQuery called')
 
-    mssql.connect(dbconfig, error => {
-      // Error check
-      if (error) {
-        console.log(error.toString());
-        callback(error, null);
+      try {
+          //We have to wait until we have fetched a connection from the pool.
+          const pool = await poolPromise
+          const ps = new sql.PreparedStatement(pool)
 
-        // close connection 
-        mssql.close();
+          ps.prepare(query,
+              err => {
+                  if (err) {
+                      logger.error('An error occurred while preparing the statement: ', err)
+                      callback(err, null)
+                  }
+                  ps.execute({}, (err, result) => {
+                      if (err) {
+                          logger.error('An error occurred while executing the statement: ', err)
+                          callback(err, null)
+                          //We have to unprepare the statement so the connection will be placed back in the pool.
+                          ps.unprepare(err => {
+                              if (err) {
+                                  logger.error('An error occurred while unpreparing the statement: ', err)
+                              }
+                          })
+                      }
+                      if (result) {
+                          logger.info('Got a result!')
+                          console.log("###################################");
+                          console.log(result);
+
+                          callback(null, result.recordset)
+                          //We have to unprepare the statement so the connection will be placed back in the pool.
+                          ps.unprepare(err => {
+                              if (err) {
+                                  logger.error('An error occurred while unpreparing the statement: ', err)
+                              }
+                          })
+                      }
+                  })
+              }
+          )
+      } catch (err) {
+          logger.error('An error occured while dbQuery was called: ' + err)
       }
-      if (!error) {
-        // Query
-        new mssql.Request().query(query, (error, result) => {
-          if (error) {
-            console.log('error', error.toString())
-            callback(error, null)
-            mssql.close()
-          }
-
-          // Result is correct
-          if (result) {
-            console.log(result);
-
-            // Do callback AFTER sending result
-            mssql.close();
-            callback(null, result.recordset)
-          }
-        })
-      }
-    })
   }
-};
+}
