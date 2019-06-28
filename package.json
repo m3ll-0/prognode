@@ -4,7 +4,8 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "node node_modules/mocha/bin/_mocha ./test/*test.js --reporter spec --exit"
+    "test": "node node_modules/mocha/bin/_mocha ./test/*test.js --reporter spec --exit",
+    "start": "node app.js"
   },
   "author": "",
   "license": "ISC",

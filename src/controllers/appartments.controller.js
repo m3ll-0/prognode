@@ -12,8 +12,6 @@ module.exports = {
             join dbuser as u on u.userid = a.userid
             join reservation as r on r.apartmentid = a.apartmentid`;
 
-        // OLD SELECT * FROM Apartment LEFT JOIN Reservation ON Apartment.ApartmentId = Reservation.ApartmentId LEFT JOIN DBUser ON Reservation.UserId = DBUser.UserId;
-
         database.dbQuery(query, (err, rows) => {
             // handle result
             if(err){
@@ -23,7 +21,7 @@ module.exports = {
                 }
                 next(errorObject);
                 
-            }
+            } 
             if(rows){
                 res.status(200).json({result: rows});
             }
@@ -531,5 +529,3 @@ module.exports = {
         });
     }
 }
-
-

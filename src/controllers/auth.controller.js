@@ -116,8 +116,6 @@ module.exports = {
 
             bcrypt.compare(req.body.Password, rows[0].Password, function(err, result) {
               if(result) {
-               // Passwords match
-
               // Put userId in payload
               const payload = {
                 UserId: rows[0].UserId
