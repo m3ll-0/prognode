@@ -2,8 +2,7 @@
 const jwt = require('jsonwebtoken');
 const database = require('../datalayer/mssql.dao');
 const assert = require('assert');
-
-var validator = require("email-validator");
+const bcrypt = require('bcrypt');
 
 const postalcodeValidator = new RegExp('^[1-9][0-9]{3} ?(?!sa|sd|ss)[a-z]{2}$');
 const phoneValidator = new RegExp('^06(| |-)[0-9]{8}$')
@@ -74,21 +73,26 @@ module.exports = {
             return next(errorObject)
           }
 
-        const query = `INSERT INTO DBUser VALUES ( '${user.FirstName}', '${user.LastName}', '${user.StreetAddress}', '${user.PostalCode}', '${user.City}', '${user.DateOfBirth}', '${user.PhoneNumber}', '${user.EmailAddress}', '${user.Password}' )`;
+          bcrypt.hash(user.Password, 10, function(err, hash) {
+            // Store hash in database
 
-        database.dbQuery(query, (err, rows) => {
-            // verwerk error of result
-            if (err) {
-              const errorObject = {
-                message: 'Database error.',
-                code: 500
-              }
-              next(errorObject)
-            }
-            else {
-              res.status(200).json({})
-            }
-          })
+            const query = `INSERT INTO DBUser VALUES ( '${user.FirstName}', '${user.LastName}', '${user.StreetAddress}', '${user.PostalCode}', '${user.City}', '${user.DateOfBirth}', '${user.PhoneNumber}', '${user.EmailAddress}', '${hash}' )`;
+            console.log(query);
+
+            database.dbQuery(query, (err, rows) => {
+                // verwerk error of result
+                if (err) {
+                  const errorObject = {
+                    message: 'Database error.',
+                    code: 500
+                  }
+                  next(errorObject)
+                }
+                else {
+                  res.status(200).json({})
+                }
+              })
+          });
     },
 
     loginUser: (req, res, next) => {
@@ -107,16 +111,11 @@ module.exports = {
             }
             next(errorObject)
           }
-          if (rows) {
 
-            if (rows.length === 0 || req.body.Password !== rows[0].Password) {
-              const errorObject = {
-                message: 'No authorization.',
-                code: 401
-              }
-              next(errorObject)
-            } else 
-            {
+          if (rows.length != []) {
+
+            bcrypt.compare(req.body.Password, rows[0].Password, function(err, result) {
+              if(result) {
               // Put userId in payload
               const payload = {
                 UserId: rows[0].UserId
@@ -130,13 +129,32 @@ module.exports = {
                   next(errorObject)
                 }
                 if (token) {
+                  
                   res.status(200).json({
                     result: {
                       token: token
                     }})
                 }
               })
-            }
+
+              } else {
+                const errorObject = {
+                  message: 'No authorization.',
+                  code: 401
+                }
+                next(errorObject)              
+              } 
+            });
+          }
+          else{
+
+              errorObject = {
+                message: 'User does not exist.',
+                code: 404
+              }
+    
+              return next(errorObject)
+
           }
         })
       },

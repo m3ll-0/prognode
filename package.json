@@ -4,11 +4,13 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "node node_modules/mocha/bin/_mocha ./test/*test.js --reporter spec --exit"
+    "test": "node node_modules/mocha/bin/_mocha ./test/*test.js --reporter spec --exit",
+    "start": "node app.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bcrypt": "^3.0.6",
     "chai-http": "^4.3.0",
     "email-validator": "^2.0.4",
     "express": "^4.16.4",
