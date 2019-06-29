@@ -364,7 +364,7 @@ describe('Testing /api/appartments/x/reservations', () => {
   it('Should throw error: Owner does not own reservation.', done => {
     chai
       .request(server)
-      .delete('/api/appartments/370/reservations/144')
+      .delete('/api/appartments/370/reservations/150')
       .send()
       .set('Authorization', token)
       .end((err, res) => {
