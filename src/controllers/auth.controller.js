@@ -178,7 +178,7 @@ module.exports = {
         jwt.verify(token, 'somekeythatwillwork', (err, payload) => {
           if (err) {
             errorObject = {
-              message: 'not authorized',
+              message: 'Not authorized.',
               code: 401
             }
             next(errorObject)
@@ -193,7 +193,7 @@ module.exports = {
           } 
           else {
             errorObject = {
-              message: 'UserId is missing!',
+              message: 'UserId is missing.',
               code: 401
             }
 
@@ -202,7 +202,7 @@ module.exports = {
         }
         catch{
           errorObject = {
-            message: 'Error in reading JWT token!',
+            message: 'Error in reading JWT token.',
             code: 500
           }
 
