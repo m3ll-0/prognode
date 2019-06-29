@@ -358,4 +358,32 @@ describe('Testing /api/appartments/x/reservations', () => {
       })
   })
 
+  /**
+   * Invalid DELETE /api/appartments/x/reservations/x
+   */
+  it('Should throw error: Owner does not own reservation.', done => {
+    chai
+      .request(server)
+      .delete('/api/appartments/370/reservations/150')
+      .send()
+      .set('Authorization', token)
+      .end((err, res) => {
+          
+        console.log(util.inspect(res));
+        result = res.body;
+
+        res.should.have.status(401)
+
+        result.should.be.a('object')
+        result.should.have.property('code')
+                .that.is.a('number')
+                .equals(401);
+
+        result.should.have
+                    .property('message')
+                    .that.is.a('string')
+                    .equals('Caller is not the owner of the reservation.');
+        done()
+      })
+  })
 })

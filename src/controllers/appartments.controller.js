@@ -167,7 +167,7 @@ module.exports = {
         console.log("deleteAppartment");
 
         const id = req.params.id;
-        const queryDelete = `DELETE FROM Apartment WHERE Apartment.ApartmentId=${id}`;
+        const queryDelete = `DELETE FROM Reservation WHERE ApartmentId=${id};DELETE FROM Apartment WHERE Apartment.ApartmentId=${id}`;
 
         database.dbQuery(queryDelete, (err, rows) => {
 
